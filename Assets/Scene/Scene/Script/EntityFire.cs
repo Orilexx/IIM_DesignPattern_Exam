@@ -5,12 +5,12 @@ using UnityEngine;
 public class EntityFire : MonoBehaviour
 {
     [SerializeField] Transform _spawnPoint;
-    [SerializeField] Bullet _bulletPrefab;
+    [SerializeField] BulletsPool bulletsPool;
 
     public void FireBullet(int power)
     {
-        var b = Instantiate(_bulletPrefab, _spawnPoint.transform.position, Quaternion.identity, null)
-            .Init(_spawnPoint.TransformDirection(Vector3.right), power);
+        // Récupère un bullet de la pool
+        bulletsPool.SpawnFromPool(_spawnPoint.transform.position, Quaternion.identity, _spawnPoint.TransformDirection(Vector3.right), power);
     }
 
 }

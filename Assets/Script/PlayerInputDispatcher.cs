@@ -10,10 +10,15 @@ public class PlayerInputDispatcher : MonoBehaviour
 
     [SerializeField] EntityMovement _movement;
     [SerializeField] EntityFire _fire;
+    [SerializeField] EntityBlock _shield;
 
     [SerializeField] InputActionReference _pointerPosition;
     [SerializeField] InputActionReference _moveJoystick;
     [SerializeField] InputActionReference _fireButton;
+
+    // Un characterAbilities Block est créé
+    [SerializeField] InputActionReference _shieldButton;
+
 
     Coroutine MovementTracking { get; set; }
 
@@ -21,11 +26,15 @@ public class PlayerInputDispatcher : MonoBehaviour
 
     private void Start()
     {
+
+        
         // binding
         _fireButton.action.started += FireInput;
 
         _moveJoystick.action.started += MoveInput;
         _moveJoystick.action.canceled += MoveInputCancel;
+
+        _shieldButton.action.started += ShieldInput;
     }
 
     private void OnDestroy()
@@ -34,6 +43,8 @@ public class PlayerInputDispatcher : MonoBehaviour
 
         _moveJoystick.action.started -= MoveInput;
         _moveJoystick.action.canceled -= MoveInputCancel;
+
+        _shieldButton.action.started -= ShieldInput;
     }
 
     private void MoveInput(InputAction.CallbackContext obj)
@@ -63,10 +74,18 @@ public class PlayerInputDispatcher : MonoBehaviour
     private void FireInput(InputAction.CallbackContext obj)
     {
         float fire = obj.ReadValue<float>();
-        if(fire==1)
+        // E^mpêche le joueur de tirer s'il bloque avec son bouclier
+        if(fire==1 && !_shield.GetIsBlocking())
         {
             _fire.FireBullet(2);
         }
+    }
+
+    private void ShieldInput(InputAction.CallbackContext obj)
+    {
+
+        //En cas d'input (clic droit), un callback de la méthode Block du characterAbilities est appelé
+        _shield.Block();
     }
 
 }

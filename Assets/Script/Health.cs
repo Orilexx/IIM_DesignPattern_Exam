@@ -4,16 +4,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
-public class Health : MonoBehaviour, IHealth
+public class Health : MonoBehaviour, IHealth, IDamageable
 {
     // Champs
     [SerializeField] int _startHealth;
     [SerializeField] int _maxHealth;
     [SerializeField] UnityEvent _onDeath;
+    [SerializeField] EntityBlock _shield;
 
+    [SerializeField] GameObject slider;
     // Propriétés
-    public int CurrentHealth { get; private set; }
+     public int CurrentHealth { get; private set; }
     public int MaxHealth => _maxHealth;
     public bool IsDead => CurrentHealth <= 0;
 
@@ -22,11 +25,15 @@ public class Health : MonoBehaviour, IHealth
     public event UnityAction<int> OnDamage;
     public event UnityAction OnDeath { add => _onDeath.AddListener(value); remove => _onDeath.RemoveListener(value); }
 
+    public event UnityAction<float> OnSliderUpdate;
+
     // Methods
     void Awake() => Init();
 
     void Init()
     {
+        
+        _shield = transform.GetComponentInChildren<EntityBlock>();
         CurrentHealth = _startHealth;
         OnSpawn?.Invoke();
     }
@@ -34,15 +41,19 @@ public class Health : MonoBehaviour, IHealth
     public void TakeDamage(int amount)
     {
         if (amount < 0) throw new ArgumentException($"Argument amount {nameof(amount)} is negativ");
-
-        var tmp = CurrentHealth;
-        CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
-        var delta = CurrentHealth - tmp;
-        OnDamage?.Invoke(delta);
-
-        if(CurrentHealth <= 0)
+        //Si le joueur bloque, aucun dégat n'est pris
+        if (_shield is null || !_shield.GetIsBlocking())
         {
-            _onDeath?.Invoke();
+            var tmp = CurrentHealth;
+            CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+            var delta = CurrentHealth - tmp;
+            OnDamage?.Invoke(delta);
+
+
+            if (CurrentHealth <= 0)
+            {
+                _onDeath?.Invoke();
+            }
         }
 
     }
@@ -87,7 +98,22 @@ public class Health : MonoBehaviour, IHealth
     }
 
 
+    // La méthode ReloadGame est liée à l'event OnDeath dans l'inspector
+    public void ReloadGame()
+    {
+        SceneManager.LoadScene("Game");
+    }
 
 
+    //Méthode permettant de soigner le joueur
+    public void Heal()
+    {
+        CurrentHealth = MaxHealth;
+    }
+
+    public void SliderUpdate(float value)
+    {
+        slider.GetComponent<SliderManager>().UpdateSlider(value);
+    }
 
 }
